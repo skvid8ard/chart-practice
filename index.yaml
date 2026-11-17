@@ -15,6 +15,6 @@ entries:
     name: openresty-art
     type: application
     urls:
-    - https://raw.githubusercontent.com/skvid8ard/chart-practice/chart/charts/openresty-art-0.1.0.tgz
+    - https://raw.githubusercontent.com/skvid8ard/chart-practice/chart/openresty-art-0.1.0.tgz
     version: 0.1.0
 generated: "2026-11-17T23:37:22.671638772+03:00"
