@@ -41,5 +41,5 @@ ingress:
           pathType: Prefix
   tls:
     - hosts:
-      - application
+      - application.kryukov.local
       secretName: art-tls
