@@ -1,0 +1,6 @@
+dependencies:
+- name: openresty-app
+  repository: file://../openresty-app
+  version: 0.1.0
+digest: sha256:d23d3f0637df65e1a383de6dd12b812647257ab66d476ba25ef418f554a24f7f
+generated: "2026-11-18T00:40:32.908021205+03:00"

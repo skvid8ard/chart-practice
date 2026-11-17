@@ -29,3 +29,10 @@ maintainers:
   - name: Artur Kryukov
     email: artur@kryukov.biz
     url: https://www.kryukov.biz
+
+dependencies:
+  - name: openresty-app
+    alias: web
+    version: "0.1.0"
+    repository: "file://../openresty-app"
+    condition: web.enabled

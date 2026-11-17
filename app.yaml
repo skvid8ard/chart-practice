@@ -1,41 +1,41 @@
 ---
-# Source: openresty-art/templates/configmap-conf.yaml
+# Source: openresty-art/charts/web/templates/configmap-conf.yaml
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: app-openresty-art-conf
+  name: art-web-conf
   labels:
-    helm.sh/chart: openresty-art-0.1.0
-    app.kubernetes.io/name: openresty-art
-    app.kubernetes.io/instance: app
+    helm.sh/chart: web-0.1.0
+    app.kubernetes.io/name: web
+    app.kubernetes.io/instance: art
     app.kubernetes.io/version: "1.19.9.1-centos-rpm"
     app.kubernetes.io/managed-by: Helm
 data:
   default.conf: |
     server {
-        listen       80;
-        server_name  localhost;
+            listen       80;
+            server_name  localhost;
     
-        location / {
-            root   /usr/local/openresty/nginx/html;
-            index  index.html index.htm;
-        }
+            location / {
+                root   /usr/local/openresty/nginx/html;
+                index  index.html index.htm;
+            }
     
-        error_page   500 502 503 504  /50x.html;
-        location = /50x.html {
-            root   /usr/local/openresty/nginx/html;
-        }
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   /usr/local/openresty/nginx/html;
+            }
     }
 ---
-# Source: openresty-art/templates/configmap-html.yaml
+# Source: openresty-art/charts/web/templates/configmap-html.yaml
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: app-openresty-art-html
+  name: art-web-html
   labels:
-    helm.sh/chart: openresty-art-0.1.0
-    app.kubernetes.io/name: openresty-art
-    app.kubernetes.io/instance: app
+    helm.sh/chart: web-0.1.0
+    app.kubernetes.io/name: web
+    app.kubernetes.io/instance: art
     app.kubernetes.io/version: "1.19.9.1-centos-rpm"
     app.kubernetes.io/managed-by: Helm
 data:
@@ -43,21 +43,21 @@ data:
     <!DOCTYPE html>
     <html>
     <head>
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-    <meta content="utf-8" http-equiv="encoding">
-    <title>Error</title>
-    <style>
-        body {
-            width: 35em;
-            margin: 0 auto;
-            font-family: Tahoma, Verdana, Arial, sans-serif;
-        }
-    </style>
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+        <meta content="utf-8" http-equiv="encoding">
+        <title>Error</title>
+        <style>
+            body {
+                width: 35em;
+                margin: 0 auto;
+                font-family: Tahoma, Verdana, Arial, sans-serif;
+            }
+        </style>
     </head>
     <body>
     <h1>An error occurred.</h1>
     <p>Sorry, the page you are looking for is currently unavailable.<br/>
-    Please try again later.</p>
+        Please try again later.</p>
     </body>
     </html>
   index.html: |
@@ -67,57 +67,62 @@ data:
         <meta charset="UTF-8">
     </head>
     <body>
-      <h1>Тестовая страница</h1>
+    <h1>Тестовая страница</h1>
     
     </body>
     </html>
 ---
-# Source: openresty-art/templates/service.yaml
+# Source: openresty-art/charts/web/templates/service.yaml
 kind: Service
 apiVersion: v1
 metadata:
-  name: app-openresty-art-svc
+  name: art-web-svc
   labels:
-    helm.sh/chart: openresty-art-0.1.0
-    app.kubernetes.io/name: openresty-art
-    app.kubernetes.io/instance: app
+    helm.sh/chart: web-0.1.0
+    app.kubernetes.io/name: web
+    app.kubernetes.io/instance: art
     app.kubernetes.io/version: "1.19.9.1-centos-rpm"
     app.kubernetes.io/managed-by: Helm
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
     - port: 80
       targetPort: 80
+      name: proxy-2
+      nodePort: 32003
   selector:
-    app.kubernetes.io/name: openresty-art
-    app.kubernetes.io/instance: app
+    app.kubernetes.io/name: web
+    app.kubernetes.io/instance: art
 ---
-# Source: openresty-art/templates/deployment.yaml
+# Source: openresty-art/charts/web/templates/deployment.yaml
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: app-openresty-art
+  name: art-web
   labels:
-    helm.sh/chart: openresty-art-0.1.0
-    app.kubernetes.io/name: openresty-art
-    app.kubernetes.io/instance: app
+    helm.sh/chart: web-0.1.0
+    app.kubernetes.io/name: web
+    app.kubernetes.io/instance: art
     app.kubernetes.io/version: "1.19.9.1-centos-rpm"
     app.kubernetes.io/managed-by: Helm
+  annotations:
+    reloader.stakater.com/auto: "true"
+    configmap.reloader.stakater.com/reload: "openresty"
 spec:
   replicas: 1
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app.kubernetes.io/name: openresty-art
-      app.kubernetes.io/instance: app
+      app.kubernetes.io/name: web
+      app.kubernetes.io/instance: art
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: openresty-art
-        app.kubernetes.io/instance: app
+        app.kubernetes.io/name: web
+        app.kubernetes.io/instance: art
     spec:
       containers:
-        - name: app-openresty-art
+        - name: art-web
           image: "openresty/openresty:centos-rpm"
           imagePullPolicy: IfNotPresent
           ports:
@@ -125,12 +130,24 @@ spec:
               name: http
           livenessProbe:
             httpGet:
-              path: /
+              path: /index.html
               port: http
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
-              path: /
+              path: /index.html
               port: http
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          resources:
+            limits:
+              cpu: "0.3"
+              memory: 500Mi
+            requests:
+              cpu: "0.1"
+              memory: 100Mi
           volumeMounts:
             - name: html
               mountPath: /usr/local/openresty/nginx/html/
@@ -139,7 +156,7 @@ spec:
       volumes:
         - name: html
           configMap:
-            name: app-openresty-art-html
+            name: art-web-html
         - name: config
           configMap:
-            name: app-openresty-art-conf
+            name: art-web-conf
